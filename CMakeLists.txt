@@ -49,40 +49,56 @@ if	(HAVE_GETOPT_H)
 	add_definitions(-DHAVE_GETOPT_H)
 endif	()
 
-Set(CURSES_NEED_NCURSES TRUE)
-find_package(Curses)
-include_directories(${CURSES_INCLUDE_DIR})
-add_definitions(-DHAVE_NCURSES_H)
+if	(MSVC)
+	find_path(PDC_INCLUDES curses.h REQUIRED)
+	find_library(PDC_LIBS pdcurses REQUIRED)
 
-add_executable(cmatrix cmatrix.c)
+	find_path(getopt_INCLUDES getopt.h REQUIRED)
+	find_library(getopt_LIBS pdcurses REQUIRED)
+	set(HAVE_GETOPT_H ON INTERNAL "")
 
-target_link_libraries(cmatrix ${CURSES_LIBRARIES})
+	add_executable(cmatrix cmatrix.c)
+	
+	target_include_directories(cmatrix PRIVATE ${PDC_INCLUDES})
+	target_link_libraries(cmatrix PRIVATE ${PDC_LIBS})
 
-install(TARGETS cmatrix DESTINATION bin)
+	target_include_directories(cmatrix PRIVATE ${getopt_INCLUDES})
+	target_link_libraries(cmatrix PRIVATE ${getopt_LIBS})
+else()
+	Set(CURSES_NEED_NCURSES TRUE)
+	find_package(Curses)
+	include_directories(${CURSES_INCLUDE_DIR})
+	add_definitions(-DHAVE_NCURSES_H)
 
-if     (UNIX)
-	foreach    (CONSOLE_FONTS_DIR ${CONSOLE_FONTS_DIRS})
-		if     (IS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${CONSOLE_FONTS_DIR}")
-			message(STATUS "Installing matrix console fonts to ${CMAKE_INSTALL_PREFIX}/${CONSOLE_FONTS_DIR}")
-			install(FILES
-				"${CMAKE_SOURCE_DIR}/matrix.fnt"
-				"${CMAKE_SOURCE_DIR}/matrix.psf.gz"
-				DESTINATION "${CONSOLE_FONTS_DIR}")
-		endif  ()
-	endforeach ()
-	foreach    (X_FONTS_DIR ${X_FONTS_DIRS})
-		if     (IS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR}")
-			message(STATUS "Installing matrix X window fonts to ${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR}")
-			install(FILES
-				"${CMAKE_SOURCE_DIR}/mtx.pcf"
-				DESTINATION "${X_FONTS_DIR}")
-			install(CODE
-				"message(STATUS \"Running mkfontdir ${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR} ...\")")
-			install(CODE
-				"execute_process(COMMAND \"${MKFONTDIR}\" \"${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR}\")")
-			install(CODE
-				"message(STATUS \"If this is the first time you have installed CMatrix you will probably have to restart X window in order to use the mtx.pcf font.\")")
-		endif  ()
-	endforeach ()
-endif  ()
+	add_executable(cmatrix cmatrix.c)
 
+	target_link_libraries(cmatrix ${CURSES_LIBRARIES})
+
+	install(TARGETS cmatrix DESTINATION bin)
+
+	if  (UNIX)
+		foreach    (CONSOLE_FONTS_DIR ${CONSOLE_FONTS_DIRS})
+			if     (IS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${CONSOLE_FONTS_DIR}")
+				message(STATUS "Installing matrix console fonts to ${CMAKE_INSTALL_PREFIX}/${CONSOLE_FONTS_DIR}")
+				install(FILES
+					"${CMAKE_SOURCE_DIR}/matrix.fnt"
+					"${CMAKE_SOURCE_DIR}/matrix.psf.gz"
+					DESTINATION "${CONSOLE_FONTS_DIR}")
+			endif  ()
+		endforeach ()
+		foreach    (X_FONTS_DIR ${X_FONTS_DIRS})
+			if     (IS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR}")
+				message(STATUS "Installing matrix X window fonts to ${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR}")
+				install(FILES
+					"${CMAKE_SOURCE_DIR}/mtx.pcf"
+					DESTINATION "${X_FONTS_DIR}")
+				install(CODE
+					"message(STATUS \"Running mkfontdir ${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR} ...\")")
+				install(CODE
+					"execute_process(COMMAND \"${MKFONTDIR}\" \"${CMAKE_INSTALL_PREFIX}/${X_FONTS_DIR}\")")
+				install(CODE
+					"message(STATUS \"If this is the first time you have installed CMatrix you will probably have to restart X window in order to use the mtx.pcf font.\")")
+			endif  ()
+		endforeach ()
+	endif  ()
+endif()

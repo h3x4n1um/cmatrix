@@ -34,7 +34,9 @@
 #include <locale.h>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
+#define strcasecmp _stricmp
 #include <windows.h>
+#include <stdbool.h>
 #endif
 
 #ifndef EXCLUDE_CONFIG_H
